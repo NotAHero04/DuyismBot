@@ -1,0 +1,39 @@
+import requests
+import re
+
+def run(word: str, page: int = 1):
+    url = "https://api.urbandictionary.com/v0/define"
+
+    querystring = {"term": word, "page": page}
+
+    ret = []
+    r = requests.request("GET", url, params=querystring).json()['list']
+
+    for i, d in enumerate(r):
+        ret.append([d['word'], d['thumbs_up'], d['thumbs_down'], d['author'], d['definition'], d['example'],
+                d['written_on']])
+
+    return ret
+
+def get_def_count(word: str):
+    # A pretty dirty way to get the definition count.
+    # A normal Urban Dictionary webpage has up to 7 definitions
+    # This reduces the things to check to: how many pages, and how
+    # many definitions in the last page.
+    url = "https://www.urbandictionary.com/define.php"
+    querystring = {"term": word}
+    r = requests.request("GET", url, params=querystring)
+    f = re.findall("page=[0-9]{1,}", r.text)
+    if len(f) == 0:
+        r = requests.request("GET", url, params=querystring)
+        f2 = r.text.count("Flag this definition")
+        return f2
+    else:
+        page = int(f[-1][5:])
+        querystring = querystring | {"page": page}
+        r = requests.request("GET", url, params=querystring)
+        f2 = r.text.count("Flag this definition")
+        return int(f[-1][5:]) * 7 - 7 + f2
+    # Every definition comes with a flag button.
+    # "Flag this definition" is just the description of the button
+    # or, more precisely speaking, part of the description.
