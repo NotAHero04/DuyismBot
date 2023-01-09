@@ -13,6 +13,7 @@ from utils import urban
 
 home = os.path.split(os.path.abspath(inspect.getsourcefile(lambda: 0)))[0]
 
+
 class UrbanModal(Modal, title="Go to page..."):
     def __init__(self, word):
         super().__init__()
@@ -59,16 +60,21 @@ class UrbanView(View):
                        style=ButtonStyle.green)
     async def prev(self, interaction: Interaction, button: Button):
         global index
-        index -= 1
-        if index % 10 == 0:
-            global ret
-            ret = urban.run(self.word, (index - 1) // 10 + 1)
-        if index < 1:
-            index = 1
-        await interaction.response.edit_message(content=f"""
+        try:
+            index -= 1
+            if index % 10 == 0:
+                global ret
+                ret = urban.run(self.word, (index - 1) // 10 + 1)
+            if index < 1:
+                index = 1
+            await interaction.response.edit_message(content=f"""
 {index}/{self.max_index}
 {parse(ret[(index - 1) % 10])}
 """)
+        except IndexError:
+            index += 1
+            await interaction.response.send_message(f"""Something goes wrong. Try again.""", ephemeral=True)
+
 
     @discord.ui.button(label=">>",
                        style=ButtonStyle.green)
@@ -86,12 +92,14 @@ class UrbanView(View):
 {parse(ret[(index - 1) % 10])}
 """)
         except IndexError:
-
+            index -= 1
+            await interaction.response.send_message(f"""Something goes wrong. Try again.""", ephemeral=True)
 
     @discord.ui.button(label="Go to...",
                        style=ButtonStyle.gray)
     async def goto(self, interaction: Interaction, button: Button):
         await interaction.response.send_modal(UrbanModal(word=self.word))
+
 
 class UrbanCog(commands.Cog):
     def __init__(self, client):
@@ -103,8 +111,8 @@ class UrbanCog(commands.Cog):
         fetch_all_results="Decides whether the bot should fetch all the results instead of just 10. Default to False."
     )
     @app_commands.choices(fetch_all_results=[
-        app_commands.Choice(name="true", value = 1),
-        app_commands.Choice(name="false", value = 0)
+        app_commands.Choice(name="true", value=1),
+        app_commands.Choice(name="false", value=0)
     ])
     async def urban(self, interaction: Interaction, word: str, fetch_all_results: int = 0):
         """ Get the definition of a word from Urban Dictionary """
@@ -130,6 +138,7 @@ class UrbanCog(commands.Cog):
 
 async def setup(client):
     await client.add_cog(UrbanCog(client))
+
 
 def parse(msg: list):
     ret = f"""**{msg[0]}**

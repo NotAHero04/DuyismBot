@@ -62,7 +62,7 @@ async def on_ready():
         Client ID to make sure you invite the correct bot with correct scopes.
     """
     print(inspect.cleandoc(f"""
-        Logged in as {client.user} (ID: {client.user.id})
+        > Logged in as {client.user} (ID: {client.user.id})
     """))
 
 # Runs the bot with the token you provided
