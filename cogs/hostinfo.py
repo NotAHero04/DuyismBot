@@ -18,6 +18,7 @@ class HostInfoCog(commands.Cog):
         """ Get the host system information """
         print(f"> {interaction.user} used the command 'hostinfo'.")
         version = "{}.{}.{}".format(*sys.version_info)
+        output = ""
         match platform.system():
             case "Windows":
                 output = inspect.cleandoc(f"""

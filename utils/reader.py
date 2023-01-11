@@ -1,16 +1,7 @@
 import re
 import sys
-from concurrent.futures import ThreadPoolExecutor
 
 logfile = open(sys.argv[1])
-
-
-def parallel_task(pattern):
-    for i, line in enumerate(logfile):
-        search = re.search(pattern, line)
-        if search is not None:
-            return search
-
 
 patterns = [
     "iPhone.*|iPod.*|iPad.*|Architecture:.*",
@@ -22,6 +13,12 @@ patterns = [
     "dynamic-codesigning: .*",
     "JIT has been enabled"
 ]
-with ThreadPoolExecutor() as executor:
-    results = list(executor.map(parallel_task, patterns))
-    
+
+
+def run(pattern):
+    for i, line in enumerate(logfile):
+        search = re.search(pattern, line)
+        if search is not None:
+            return search
+
+

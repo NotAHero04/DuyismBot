@@ -14,15 +14,16 @@ class ReloadCog(commands.Cog):
     async def reload(self, interaction: Interaction):
         """Reload the commands and events"""
         print(f"> {interaction.user} used the command 'reload'.")
+        await interaction.response.defer()
         try:
             for extension in list(self.client.extensions):
                 await self.client.unload_extension(extension)
             for filename in os.listdir(home):
                 if filename.endswith(".py") and not filename.startswith("__"):
                     await self.client.load_extension(f"cogs.{filename[:-3]}")
-            await interaction.response.send_message("Successfully reloaded!")
+            await interaction.followup.send("Successfully reloaded!")
         except Exception:
-            await interaction.response.send_message("An error occurred while reloading.")
+            await interaction.followup.send("An error occurred while reloading.")
             await self.client.load_extension("cogs.reload")
 
 

@@ -12,7 +12,8 @@ class AboutCog(commands.Cog):
     async def about(self, interaction: Interaction):
         """ About this bot and its components """
         print(f"> {interaction.user} used the command 'about'.")
-        await interaction.response.send_message(about.run())
+        await interaction.response.defer()
+        await interaction.followup.send(about.run())
 
 
 async def setup(client):

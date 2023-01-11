@@ -18,7 +18,8 @@ class LunarCog(commands.Cog):
     async def lunar(self, interaction: Interaction, date: str = datetime.date.today().isoformat()):
         """ Get the lunar date """
         print(f"> {interaction.user} used the command 'lunar'.")
-        await interaction.response.send_message(lunar.run(date))
+        await interaction.response.defer()
+        await interaction.followup.send(lunar.run(date))
 
 
 async def setup(client):

@@ -15,8 +15,58 @@ def run():
     x1 = process(x)
     y = soup.find_all('th')
     y1 = process(y)
-    out = [b + ' ' + a for b, a in zip(y1, x1[:-2])]
-    return out
+    out = dict(zip(y1, x1[:-2]))
+    # General info
+    ret = {
+        "Release date": out['Release Date:'],
+        "Codename": out['Codename:'],
+        "Vertical Segment": out['Market:'],
+        "Fabrication process": out['Process Size:']
+    }
+    # Cores and threads
+    ret |= {
+        "Cores": int(out['# of Cores:']),
+        "Threads": int(out['# of Threads:'])
+    }
+    if ret['Cores'] != ret['Threads'] and ret['Cores'] != ret['Threads'] // 2:
+    # Hybrid architecture (Intel 12th gen or later)
+        ret |= {
+            "Cores": {
+                "P-cores": ret['Threads'] - ret['Cores'],
+                "E-cores": 2 * ret['Cores'] - ret['Threads']
+            },
+            "Base frequency": {
+                "P-cores": out['Frequency:'],
+                "E-cores": out['E-Core Frequency:']
+            },
+            "Turbo frequency": {
+                "P-cores": out['Turbo Clock:'],
+                "E-cores": out['E-Core Turbo Clock:']
+            },
+            "Cache": {
+                "P-cores": {
+                    "L1": out['Cache L1:'],
+                    "L2": out['Cache L2:']
+                },
+                "E-cores": {
+                    "L1": out['E-Core L1:'],
+                    "L2": out['E-Core L2:']
+                }
+            }
+        }
+    else:
+        ret |= {
+            "Base frequency": out['Frequency:'],
+            "Turbo frequency": out['Turbo Clock:'],
+            "Cache": {
+                "L1": out['Cache L1:'],
+                "L2": out['Cache L2:']
+            },
+        }
+    ret |= {
+        "L3 cache": out['Cache L3:']
+    }
+    return ret
 
 
 def process(tags: list):
@@ -27,3 +77,5 @@ def process(tags: list):
         except IndexError:
             ret.append('(unknown)')
     return ret
+
+# print(run())

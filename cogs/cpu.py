@@ -16,10 +16,10 @@ class CPUCog(commands.Cog):
     async def cpu(self, interaction: Interaction):
         """ Get info about x86-based CPUs """
         print(f"> {interaction.user} used the command 'cpu'.")
-        await interaction.response.send_message("Wait a second...")
+        await interaction.response.defer()
         result = cpu.run()
         content = '\n'.join(result)
-        await interaction.edit_original_response(content=content)
+        await interaction.followup.send(content=content)
 
 
 async def setup(client):

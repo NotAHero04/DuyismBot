@@ -12,7 +12,8 @@ class BadgeCog(commands.Cog):
         """ For the surprise """
         print(f"> {interaction.user} used the command 'badge'.")
 
-        await interaction.response.send_message(inspect.cleandoc(f"""
+        await interaction.response.defer()
+        await interaction.followup.send(inspect.cleandoc(f"""
             Hi **{interaction.user}**.
             > __**Where's my badge?**__
             > Eligibility for the badge is checked by Discord in intervals,

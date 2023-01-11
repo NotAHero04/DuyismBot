@@ -17,7 +17,8 @@ class PythagorasCog(commands.Cog):
     async def pythagoras(self, interaction: Interaction, number: int):
         """ Prints a prime Pythagoras triple """
         print(f"> {interaction.user} used the command 'pythagoras'.")
-        await interaction.response.send_message(pythagoras.run(number))
+        await interaction.response.defer()
+        await interaction.followup.send(pythagoras.run(number))
 
 
 async def setup(client):

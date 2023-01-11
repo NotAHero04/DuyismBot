@@ -17,10 +17,10 @@ class DictionaryCog(commands.Cog):
     async def dictionary(self, interaction: Interaction, word: str):
         """ Get the meaning of an English word """
         print(f"> {interaction.user} used the command 'dictionary'.")
-        await interaction.response.send_message("Wait a second...")
+        await interaction.response.defer()
         for index, msg in enumerate(dictionary.run(word)):
             if index == 0:
-                await interaction.edit_original_response(content=msg)
+                await interaction.followup.send(content=msg)
             else:
                 await interaction.followup.send(msg)
 

@@ -18,6 +18,7 @@ class FactorizeCog(commands.Cog):
     async def factorize(self, interaction: Interaction, number: int):
         """ Prints the prime factorization of a number """
         print(f"> {interaction.user} used the command 'factorize'.")
+        await interaction.response.defer()
         await interaction.response.send_message(factor.run(number))
 
 

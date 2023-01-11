@@ -28,6 +28,5 @@ def get_def_count(word: str):
         page = int(f[-1][5:])
         querystring = {"term": word, "page": page}
         r2 = requests.request("GET", url, params=querystring)
-        print(r2.text)
         f2 = r2.text.count("Flag this definition")
         return page * 7 - 7 +f2
