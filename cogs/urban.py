@@ -1,4 +1,4 @@
-# Someone is gonna write this piece of code better than me.
+# Someone is going to write this piece of code better than me.
 # Probably me in the future?
 
 import inspect
