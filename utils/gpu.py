@@ -48,19 +48,17 @@ def get_info(item: tuple[str, str]):
     # Cores and threads
     ret |= {
         "Cores": out['# of Cores:'],
-        "Threads": out['# of Threads:'],
-        "Is unlocked": out['Multiplier Unlocked:']
+        "Threads": out['# of Threads:']
     }
     if (ret['Cores'] != ret['Threads']) and (int(ret['Cores']) != int(ret['Threads']) // 2):
         # Hybrid architecture (SOME Intel 12th gen or later)
         ret |= {
-            "Cores": f'{int(ret["Threads"]) - int(ret["Cores"])} P-cores, {2 * int(ret["Cores"]) - int(ret["Threads"])} E-cores ({ret["Cores"]} total)',
+            "Cores": f'{int(ret["Threads"]) - int(ret["Cores"])} P-cores, \
+        {2 * int(ret["Cores"]) - int(ret["Threads"])} P-cores ({ret["Cores"]} total)',
             "P-core base frequency": out['Frequency:'],
             "E-core base frequency": out['E-Core Frequency:'],
             "P-core turbo frequency": out['Turbo Clock:'],
             "E-core turbo frequency": out['E-Core Turbo Clock:'],
-            "Base power": out['TDP:'],
-            "Turbo power": f'PL1: {out["PL1:"]}, PL2: {out["PL2:"]}, boost window: {out["PL2 Tau Limit:"]}',
             "P-core L1 cache": out['Cache L1:'],
             "P-core L2 cache": out['Cache L2:']
         }
@@ -75,13 +73,6 @@ def get_info(item: tuple[str, str]):
         ret |= {
             "Base frequency": out['Frequency:'],
             "Turbo frequency": out['Turbo Clock:'],
-            "TDP": out['TDP:']
-        }
-        try:
-            ret |= {"APU PPT": out['PPT:']}
-        except KeyError:
-            pass
-        ret |= {
             "L1 cache": out['Cache L1:'],
             "L2 cache": out['Cache L2:']
         }

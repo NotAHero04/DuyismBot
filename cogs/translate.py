@@ -19,7 +19,7 @@ class TranslateCog(commands.Cog):
     )
     async def translate(self, interaction: Interaction, string: str, target_language: str):
         """ Translate a string """
-        print(f"> {interaction.user} used the command 'dictionary'.")
+        print(f"> {interaction.user} used the command 'translate'.")
         await interaction.response.defer()
         result = translate.run(string, target_language)
         await interaction.followup.send(content=f"""
