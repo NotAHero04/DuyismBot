@@ -4,14 +4,14 @@ Ultimate Duyism Log Reader
 This bot is in pre-release stage. Use with caution.
 Made by modern#0399 for some of his nonsense projects.
 
-Latest preview: 0.1.4-pre.1 (2023-1-12).
-     New features:
+Latest preview: 0.1.4-pre.2 (2023-1-15).
+     New commands:
           - "cpu" command.
               + Uses TechPowerUP's webpage to retrieve information about CPUs from Intel and AMD.
               + Status: Working.
           - "gpu" command.
               + Uses TechPowerUP's webpage to retrieve information about GPUs from Nvidia, AMD and Intel.
-              + Status: Not implemented.
+              + Status: Working.
           - (Experimental) "phone" command.
               + Retrieve information about phones.
               + Status: Not implemented.

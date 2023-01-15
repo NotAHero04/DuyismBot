@@ -64,33 +64,27 @@ def get_info(item: tuple[str, str]):
             "P-core L1 cache": out['Cache L1:'],
             "P-core L2 cache": out['Cache L2:']
         }
-        try:
+        if 'E-Core L1:' in out:
             ret |= {
                 "E-core L1 cache": out['E-Core L1:'],
                 "E-core L2 cache": out['E-Core L2:']
             }
-        except KeyError:
-            pass
     else:
         ret |= {
             "Base frequency": out['Frequency:'],
             "Turbo frequency": out['Turbo Clock:'],
             "TDP": out['TDP:']
         }
-        try:
+        if 'PPT:' in out:
             ret |= {"APU PPT": out['PPT:']}
-        except KeyError:
-            pass
         ret |= {
             "L1 cache": out['Cache L1:'],
             "L2 cache": out['Cache L2:']
         }
-    try:
+    if 'Cache L3:' in out:
         ret |= {
             "L3 cache": out['Cache L3:']
         }
-    except KeyError:
-        pass
 
     return [r.status_code, ret]
 

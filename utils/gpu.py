@@ -4,12 +4,19 @@ from bs4 import BeautifulSoup
 
 
 def search(term: str):
-    get = requests.get(f"https://www.techpowerup.com/cpu-specs/?ajaxsrch={term}")
+    get = requests.get(f"https://www.techpowerup.com/gpu-specs/?ajaxsrch={term}")
     soup = BeautifulSoup(get.text, "html.parser")
     results = soup.find_all('a', href=True)
     names = [i.contents[0] for i in results]
     links = [i['href'] for i in results]
-    return list(zip(names, links))
+    ret = list(zip(names, links))
+    # Now, we need to get the right result
+    for idx, name in enumerate(names):
+        if name.lower() == term.lower():
+            return ret[idx]
+        if name.lower().startswith(term.lower()) or name.lower().endswith(term.lower()):
+            return ret[idx]
+    return ret[0]
 
 
 def process(tags: list):
@@ -32,59 +39,79 @@ def get_info(item: tuple[str, str]):
     r = requests.get(f"https://www.techpowerup.com{link}",
                      headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
-    x = soup.find_all('td')
+    x = soup.find_all('dt')
     x1 = process(x)
-    y = soup.find_all('th')
+    y = soup.find_all('dd')
     y1 = process(y)
-    out = dict(zip(y1, x1[:-1]))
+    out = dict(zip(x1, y1))
     # General info
     ret = {
         "Name": name,
-        "Release date": out['Release Date:'],
-        "Codename": out['Codename:'],
-        "Vertical Segment": out['Market:'],
-        "Fabrication process": out['Process Size:']
+        "Release date": out['Release Date'],
+        "Die variant": out['GPU Variant'],
+        "Architecture": out['Architecture'],
+        "Fabrication process": out['Process Size']
     }
-    # Cores and threads
+    if all(key in out for key in ("Width", "Height")):
+        ret |= {"Size": f"{out['Length']} x {out['Width']} x {out['Height']}"}
+    elif "Length" in out:
+        ret |= {"Length": out['Length']}
     ret |= {
-        "Cores": out['# of Cores:'],
-        "Threads": out['# of Threads:']
+        "Slot width": out['Slot Width'],
+        "Die size": out['Die Size'],
+        "Processor": f"{out['Cores']} cores"
     }
-    if (ret['Cores'] != ret['Threads']) and (int(ret['Cores']) != int(ret['Threads']) // 2):
-        # Hybrid architecture (SOME Intel 12th gen or later)
+    if "SM Count" in out:
+        ret['Processor'] += f" in {out['SM Count']} stream processors"
+    elif "SMM Count" in out:
+        ret['Processor'] += f" in {out['SMM Count']} stream processors"
+    elif "Compute Units" in out:
+        ret['Processor'] += f" in {out['Compute Units']} compute units"
+    ret |= {"Core config": f"{out['TMUs']} TMUs, {out['ROPs']} ROPs"}
+    if 'RT Cores' in out:
+        ret |= {"Ray tracing cores": out['RT Cores']}
+    if 'Tensor Cores' in out:
+        ret |= {"Tensor cores": out['Tensor Cores']}
+    if 'Base Clock' in out:
         ret |= {
-            "Cores": f'{int(ret["Threads"]) - int(ret["Cores"])} P-cores, \
-        {2 * int(ret["Cores"]) - int(ret["Threads"])} P-cores ({ret["Cores"]} total)',
-            "P-core base frequency": out['Frequency:'],
-            "E-core base frequency": out['E-Core Frequency:'],
-            "P-core turbo frequency": out['Turbo Clock:'],
-            "E-core turbo frequency": out['E-Core Turbo Clock:'],
-            "P-core L1 cache": out['Cache L1:'],
-            "P-core L2 cache": out['Cache L2:']
+            "Base clock": out['Base Clock'],
+            "Boost clock": out['Boost Clock']
         }
-        try:
-            ret |= {
-                "E-core L1 cache": out['E-Core L1:'],
-                "E-core L2 cache": out['E-Core L2:']
-            }
-        except KeyError:
-            pass
     else:
-        ret |= {
-            "Base frequency": out['Frequency:'],
-            "Turbo frequency": out['Turbo Clock:'],
-            "L1 cache": out['Cache L1:'],
-            "L2 cache": out['Cache L2:']
-        }
-    try:
-        ret |= {
-            "L3 cache": out['Cache L3:']
-        }
-    except KeyError:
-        pass
+        ret |= {"GPU clock": out['GPU Clock']}
+    if 'Shader Clock' in out:
+        ret |= {"Shader clock": out['Shader Clock']}
+    ret |= {
+        "Memory": f"{out['Memory Size']} {out['Memory Type']} @ {out['Memory Clock']}, {out['Memory Bus']} bus",
+        "Memory bandwidth": out['Bandwidth'],
+        "Interface": out['Bus Interface'],
+        "Cache": ""
+    }
+    if 'L0 Cache' in out:
+        ret['Cache'] += f"{out['L0 Cache']} L0, "
+    if 'L1 Cache' in out:
+        ret['Cache'] += f"{out['L1 Cache']} L1, {out['L1 Cache']} L2"
+        if 'L3 Cache' in out:
+            ret['Cache'] += f", {out['L3 Cache']} L3"
+    else:
+        ret['Cache'] += "N/A"
+
+    ret |= {
+        "TDP": out['TDP'],
+        "Theoretical performance": ""
+    }
+    if 'FP16 (half) performance' in out:
+        ret["Theoretical performance"] += f"{out['FP16 (half) performance']} FP16, "
+    ret["Theoretical performance"] += f"{out['FP32 (float) performance']} FP32"
+    if 'FP64 (double) performance' in out:
+        ret["Theoretical performance"] += f", {out['FP64 (double) performance']} FP64"
+    fl = soup.find('span', title="DirectX Feature Level").contents[0][1:-1]
+    ret |= {
+        "Feature support": f"DirectX {out['DirectX']} (feature level {fl}), OpenGL {out['OpenGL']}, Vulkan {out['Vulkan']}, Shader Model {out['Shader Model']}"
+    }
 
     return [r.status_code, ret]
 
 
 def run(name: str):
-    return [get_info(i) for i in search(name)]
+    return get_info(search(name))
