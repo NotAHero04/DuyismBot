@@ -1,34 +1,33 @@
 import requests
 import re
 
-
-def search(term: str):
+def run(term: str):
     get = requests.get(f"https://phone-specs-api.azharimm.dev/search?query={term}").json()
-    ret = get['data']['phones']
-    names = [(i['brand'] + i['phone_name']).lower() for i in ret]
+    res = get['data']['phones']
+    names = [(i['brand'] + i['phone_name']).lower() for i in res]
     try:
         if term.lower() in names:
-            return ret[names.index(term.lower())]
+            s = ret[names.index(term.lower())]
         length = []
         for i in names:
             length.append(len(i.replace(term, '')))
-        if len(length) == 1:
-            return ret[length.index(length[0])]
+        if len(length) < 1:
+            return {
+                "Info": "Something went wrong while searching.",
+                "Searched for": term
+            }
+        elif len(length) == 1:
+            s = res[length.index(length[0])]
         else:
-            return ret[length.index(min(*length))]
-    except [IndexError, TypeError]:
-        return None
-
-
-def run(term: str):
-    s = search(term)
-    if s is None:
+            s = res[length.index(min(*length))]
+    except IndexError:
         return {
-            "Info": "The phone can not be found.",
+            "Info": "The phone could not be found.",
             "Searched for": term
         }
     get = requests.get(s['detail']).json()
     ret = {
+        "*Info*": "*Currently under rewrite, stay tuned!*",
         "Name": f"{get['data']['brand']} {get['data']['phone_name']}",
         "Release date": get['data']['release_date'].replace("Released ", "")
     }
@@ -71,11 +70,18 @@ def run(term: str):
                         .format(*var1, *var2)}
             except AttributeError:
                 ret |= {"SoC": "{} ({}, {})".format(*[val(idx, i) for i in range(1, 4)])}
+        ret |= {"OS": "{}".format(val(idx, 0))}
     idx = titles.index('Memory')
     if key(idx, 1) == "Internal":
         ret |= {"RAM and storage": "{}; SD card slot: {}".format(val(idx, 1), val(idx, 0))}
     elif key(idx, 1) == "Phonebook":
-        ret |= {"Storage": "{} phonebook entries".format(re.search('[0-9]+', val(idx, 1)).group(0))}
+        if val(idx, 1) == "Yes":
+            ret |= {"Storage": "Supports phonebook"}
+        else:
+            ret |= {"Storage": "{} phonebook entries".format(re.search('[0-9]+', val(idx, 1)).group(0))}
+        if len(specs(idx)) > 3 and key(idx, 3) == "Internal": #  a.k.a gaming feature phone
+            ret |= {"RAM and storage": "{}, {}".format(ret['Storage'], val(idx, 3))}
+            del ret['Storage']
     if 'Main Camera' in titles:
         idx = titles.index('Main Camera')
         ret |= {"Main camera": "{} ({})".format(key(idx, 0), val(idx, 0).replace('\n', '; '))}
