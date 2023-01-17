@@ -49,13 +49,17 @@ def run(term: str):
     if key(idx, 2) == "Build":
         ret['Body'] += ", {}".format(re.sub(r'(\w)([A-Z])', r"\1 or \2", val(idx, 2)))
     idx = titles.index('Display')
-    ret |= {"Display": "{}, {}, {}".format(val(idx, 0), re.search('.* inches', val(idx, 1)).group(0),
-                                           re.search('.* x .* pixels', val(idx, 2)).group(0))}
+    size = re.search('.* inches', val(idx, 1))
+    if size is not None:
+        ret |= {"Display": "{}, {}, {}".format(val(idx, 0), size.group(0), re.search('.* x .* pixels', val(idx, 2)).group(0))}
+    else: #  We may have the resolution slid into the second arg
+        ret |= {"Display": "{}, {}".format(val(idx, 0), re.search('.* x .* pixels', val(idx, 2)).group(0))}
+
     if 'Platform' in titles:
         idx = titles.index('Platform')
         if key(idx, 1) == "Chipset":
             # There are some phones that have at least two SoC variants
-            # Not sure if this statement can capture those
+            # Not sure if this statement can capture all of those
             try:
                 var1, var2 = [], []
                 for i in range(1, 4):
@@ -71,7 +75,7 @@ def run(term: str):
     if key(idx, 1) == "Internal":
         ret |= {"RAM and storage": "{}; SD card slot: {}".format(val(idx, 1), val(idx, 0))}
     elif key(idx, 1) == "Phonebook":
-        ret |= {"Storage": "{} phonebook entries".format(re.search('[0-9]+', val(idx, 1)))}
+        ret |= {"Storage": "{} phonebook entries".format(re.search('[0-9]+', val(idx, 1)).group(0))}
     if 'Main Camera' in titles:
         idx = titles.index('Main Camera')
         ret |= {"Main camera": "{} ({})".format(key(idx, 0), val(idx, 0).replace('\n', '; '))}
@@ -91,7 +95,7 @@ def run(term: str):
     if val(idx, 0) != "No":
         net.append("{}".format(val(idx, 0)))
     if val(idx, 1) != "No":
-        net.append("Bluetooth {}".format(val(idx, 0)))
+        net.append("Bluetooth {}".format(val(idx, 1)))
     idx = titles.index('Network')
     net.append(val(idx, 0))
     ret['Network'] = "; ".join(net)
