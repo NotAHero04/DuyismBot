@@ -18,20 +18,15 @@ class CPUCog(commands.Cog):
         """ Get info about x86-based CPUs """
         print(f"> {interaction.user} used the command 'cpu'.")
         await interaction.response.defer()
-        try:
-            result = cpu.run(name)
-        except IndexError:
-            await interaction.followup.send(f"""Oops, the CPU can not be found.
-*Searched for: {name}*""")
+        result = cpu.run(name)
+        if result[0] == 429:
+            await interaction.followup.send("We are being rate-limited. Please try again later.")
         else:
-            if result[0] == 429:
-                await interaction.followup.send("We are being rate-limited. Please try again later.")
-            else:
-                d = list(zip(result[1].keys(), result[1].values()))
-                msg = ""
-                for i in d:
-                    msg += ": ".join(i) + '\n'
-                await interaction.followup.send(msg)
+            d = list(zip(result[1].keys(), result[1].values()))
+            msg = ""
+            for i in d:
+                msg += ": ".join(i) + '\n'
+            await interaction.followup.send(msg)
 
 
 async def setup(client):

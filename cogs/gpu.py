@@ -18,19 +18,15 @@ class GPUCog(commands.Cog):
         """ Get info about GPUs """
         print(f"> {interaction.user} used the command 'gpu'.")
         await interaction.response.defer()
-        try:
-            result = gpu.run(name)
-        except IndexError:
-            await interaction.followup.send("Oops, the GPU can not be found.")
+        result = gpu.run(name)
+        if result[0] == 429:
+            await interaction.followup.send("We are being rate-limited. Please try again later.")
         else:
-            if result[0] == 429:
-                await interaction.followup.send("We are being rate-limited. Please try again later.")
-            else:
-                d = list(zip(result[1].keys(), result[1].values()))
-                msg = ""
-                for i in d:
-                    msg += ": ".join(i) + '\n'
-                await interaction.followup.send(msg)
+            d = list(zip(result[1].keys(), result[1].values()))
+            msg = ""
+            for i in d:
+                msg += ": ".join(i) + '\n'
+            await interaction.followup.send(msg)
 
 
 async def setup(client):

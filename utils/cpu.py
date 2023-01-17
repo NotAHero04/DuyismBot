@@ -7,11 +7,6 @@ from bs4 import BeautifulSoup
 f = os.path.split(os.path.abspath(inspect.getsourcefile(lambda: 0)))[0] + "/cpu_additional_info.json"
 
 
-class MatchPart(str):
-    def __eq__(self, other):
-        return self.__contains__(other)
-
-
 def search(term: str):
     get = requests.get(f"https://www.techpowerup.com/cpu-specs/?ajaxsrch={term}")
     soup = BeautifulSoup(get.text, "html.parser")
@@ -19,12 +14,15 @@ def search(term: str):
     names = [i.contents[0] for i in results]
     links = [i['href'] for i in results]
     ret = list(zip(names, links))
-    for idx, name in enumerate(names):
-        if name.lower() == term.lower():
-            return list(ret[idx])
-        if name.lower().startswith(term.lower()) or name.lower().endswith(term.lower()):
-            return list(ret[idx])
-    return tuple(ret[0])
+    try:
+        for idx, name in enumerate(names):
+            if name.lower() == term.lower():
+                return list(ret[idx])
+            if name.lower().startswith(term.lower()) or name.lower().endswith(term.lower()):
+                return list(ret[idx])
+        return tuple(ret[0])
+    except IndexError:
+        return None
 
 
 def process(tags: list):
@@ -37,10 +35,23 @@ def process(tags: list):
     return ret
 
 
-def run(term: str):
-    item = search(term)
+def run(term: str, note_b: str = None):
     info = json.load(open(f, "r"))
     info_match = [d['match'] for d in info]
+    info_to = [d['to'] for d in info]
+    for idx, i in enumerate(info_match):
+        if i in term:
+            if 'note' in info[idx]:
+                n = info[idx]['note']
+            else:
+                n = None
+            return run(info_to[idx], note_b=n)
+    item = search(term)
+    if item is None:
+        return [0, {
+            "Info": "The CPU can not be found.",
+            "Searched for": term
+        }]
     name = item[0]
     link = item[1]
     headers = {
@@ -109,5 +120,8 @@ def run(term: str):
         }
     if note is not None:
         ret |= {"\n*Note": f"{note}*"}
+
+    if note_b is not None:
+        ret |= {"\n*Additional info": f"{note_b}*"}
 
     return [r.status_code, ret]

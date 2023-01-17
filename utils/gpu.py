@@ -11,12 +11,15 @@ def search(term: str):
     links = [i['href'] for i in results]
     ret = list(zip(names, links))
     # Now, we need to get the right result
-    for idx, name in enumerate(names):
-        if name.lower() == term.lower():
-            return ret[idx]
-        if name.lower().startswith(term.lower()) or name.lower().endswith(term.lower()):
-            return ret[idx]
-    return ret[0]
+    try:
+        for idx, name in enumerate(names):
+            if name.lower() == term.lower():
+                return ret[idx]
+            if name.lower().startswith(term.lower()) or name.lower().endswith(term.lower()):
+                return ret[idx]
+        return ret[0]
+    except IndexError:
+        return None
 
 
 def process(tags: list):
@@ -29,7 +32,13 @@ def process(tags: list):
     return ret
 
 
-def get_info(item: tuple[str, str]):
+def run(term: str):
+    item = search(term)
+    if item is None:
+        return [0, {
+            "Info": "The CPU can not be found.",
+            "Searched for": term
+        }]
     name = item[0]
     link = item[1]
     headers = {
@@ -137,5 +146,3 @@ def get_info(item: tuple[str, str]):
     return [r.status_code, ret]
 
 
-def run(name: str):
-    return get_info(search(name))
