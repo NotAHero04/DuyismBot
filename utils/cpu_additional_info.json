@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Pentium G6952",
+    "match": "g6952",
+    "to": "g6951"
+  },
+  {
+    "name": "Pentium G693",
+    "match": "g693",
+    "to": "g622"
+  },
+  {
+    "name": "Core i3-2393M",
+    "match": "2393m",
+    "to": "2312m"
+  },
+  {
+    "name": "Core i3-2153",
+    "match": "2153",
+    "to": "2102"
+  },
+  {
+    "name": "Core i3-2348M",
+    "match": "2348m",
+    "to": "2350m",
+    "note": "i3-2348M has identical specs with i3-2350M despite being 1 year 3 month newer, suggesting a re-release"
+  }
+]

@@ -19,9 +19,10 @@ class CPUCog(commands.Cog):
         print(f"> {interaction.user} used the command 'cpu'.")
         await interaction.response.defer()
         try:
-            result = cpu.run(name)[0]
+            result = cpu.run(name)
         except IndexError:
-            await interaction.followup.send("Oops, the CPU can not be found.")
+            await interaction.followup.send(f"""Oops, the CPU can not be found.
+*Searched for: {name}*""")
         else:
             if result[0] == 429:
                 await interaction.followup.send("We are being rate-limited. Please try again later.")

@@ -44,11 +44,21 @@ def get_info(item: tuple[str, str]):
     y = soup.find_all('dd')
     y1 = process(y)
     out = dict(zip(x1, y1))
+    igpu = 0
     # General info
     ret = {
         "Name": name,
-        "Release date": out['Release Date'],
-        "Die variant": out['GPU Variant'],
+        "Release date": out['Release Date']
+    }
+    if 'GPU Variant' in out:
+        ret |= {"Die variant": out['GPU Variant']}
+    ret |= {"GPU type": ""}
+    if out['Memory Size'] == "System Shared":
+        igpu = 1
+        ret["GPU type"] = "Integrated graphics"
+    else:
+        ret["GPU type"] = "Discrete graphics"
+    ret |= {
         "Architecture": out['Architecture'],
         "Fabrication process": out['Process Size']
     }
@@ -56,11 +66,14 @@ def get_info(item: tuple[str, str]):
         ret |= {"Size": f"{out['Length']} x {out['Width']} x {out['Height']}"}
     elif "Length" in out:
         ret |= {"Length": out['Length']}
-    ret |= {
-        "Slot width": out['Slot Width'],
-        "Die size": out['Die Size'],
-        "Processor": f"{out['Cores']} cores"
-    }
+    if igpu != 0:
+        ret |= {"Slot width": out['Slot Width']}
+    ret |= {"Die size": out['Die Size']}
+
+    if "Shading Units" in out:
+        ret |= {"Processor": f"{out['Shading Units']} shading units"}
+    elif "Pixel Shaders" in out and "Vertex Shaders" in out:
+        ret |= {"Shader processors": f"{out['Pixel Shaders']} pixel shaders, {out['Vertex Shaders']} vertex shaders"}
     if "SM Count" in out:
         ret['Processor'] += f" in {out['SM Count']} stream processors"
     elif "SMM Count" in out:
@@ -81,9 +94,12 @@ def get_info(item: tuple[str, str]):
         ret |= {"GPU clock": out['GPU Clock']}
     if 'Shader Clock' in out:
         ret |= {"Shader clock": out['Shader Clock']}
+    if igpu == 0:
+        ret |= {
+            "Memory": f"{out['Memory Size']} {out['Memory Type']} @ {out['Memory Clock']}, {out['Memory Bus']} bus",
+            "Memory bandwidth": out['Bandwidth'],
+        }
     ret |= {
-        "Memory": f"{out['Memory Size']} {out['Memory Type']} @ {out['Memory Clock']}, {out['Memory Bus']} bus",
-        "Memory bandwidth": out['Bandwidth'],
         "Interface": out['Bus Interface'],
         "Cache": ""
     }
@@ -102,14 +118,22 @@ def get_info(item: tuple[str, str]):
     }
     if 'FP16 (half) performance' in out:
         ret["Theoretical performance"] += f"{out['FP16 (half) performance']} FP16, "
-    ret["Theoretical performance"] += f"{out['FP32 (float) performance']} FP32"
-    if 'FP64 (double) performance' in out:
-        ret["Theoretical performance"] += f", {out['FP64 (double) performance']} FP64"
-    fl = soup.find('span', title="DirectX Feature Level").contents[0][1:-1]
-    ret |= {
-        "Feature support": f"DirectX {out['DirectX']} (feature level {fl}), OpenGL {out['OpenGL']}, Vulkan {out['Vulkan']}, Shader Model {out['Shader Model']}"
-    }
-
+    if 'FP32 (float) performance' in out:
+        ret["Theoretical performance"] += f"{out['FP32 (float) performance']} FP32"
+        if 'FP64 (double) performance' in out:
+            ret["Theoretical performance"] += f", {out['FP64 (double) performance']} FP64"
+    elif 'Pixel Rate' in out and 'Vertex Rate' in out:
+        ret["Theoretical performance"] += f"{out['Pixel Rate']}, {out['Vertex Rate']}"
+    ret |= {"Feature support": ""}
+    sp = []
+    for i in ["DirectX", "OpenGL", "OpenCL", "CUDA", "Vulkan", "Shader Model"]:
+        if i in out and out[i] != "N/A":
+            if i == "DirectX":
+                fl = soup.find('span', title="DirectX Feature Level").contents[0][1:-1]
+                sp.append(f"DirectX {out['DirectX']} (feature level {fl})")
+            else:
+                sp.append(f"{i} {out[i]}")
+    ret['Feature support'] += ", ".join(sp)
     return [r.status_code, ret]
 
 

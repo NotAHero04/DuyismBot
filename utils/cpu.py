@@ -1,6 +1,15 @@
 import requests
-
+import os
+import inspect
+import json
 from bs4 import BeautifulSoup
+
+f = os.path.split(os.path.abspath(inspect.getsourcefile(lambda: 0)))[0] + "/cpu_additional_info.json"
+
+
+class MatchPart(str):
+    def __eq__(self, other):
+        return self.__contains__(other)
 
 
 def search(term: str):
@@ -9,7 +18,13 @@ def search(term: str):
     results = soup.find_all('a', href=True)
     names = [i.contents[0] for i in results]
     links = [i['href'] for i in results]
-    return list(zip(names, links))
+    ret = list(zip(names, links))
+    for idx, name in enumerate(names):
+        if name.lower() == term.lower():
+            return list(ret[idx])
+        if name.lower().startswith(term.lower()) or name.lower().endswith(term.lower()):
+            return list(ret[idx])
+    return tuple(ret[0])
 
 
 def process(tags: list):
@@ -22,7 +37,10 @@ def process(tags: list):
     return ret
 
 
-def get_info(item: tuple[str, str]):
+def run(term: str):
+    item = search(term)
+    info = json.load(open(f, "r"))
+    info_match = [d['match'] for d in info]
     name = item[0]
     link = item[1]
     headers = {
@@ -32,6 +50,10 @@ def get_info(item: tuple[str, str]):
     r = requests.get(f"https://www.techpowerup.com{link}",
                      headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
+    try:
+        note = soup.select('td.p')[0].contents[0]
+    except IndexError:
+        note = None
     x = soup.find_all('td')
     x1 = process(x)
     y = soup.find_all('th')
@@ -85,9 +107,7 @@ def get_info(item: tuple[str, str]):
         ret |= {
             "L3 cache": out['Cache L3:']
         }
+    if note is not None:
+        ret |= {"\n*Note": f"{note}*"}
 
     return [r.status_code, ret]
-
-
-def run(name: str):
-    return [get_info(i) for i in search(name)]
