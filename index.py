@@ -3,14 +3,18 @@ import inspect
 import json
 import os
 import requests
+import glob
+import sys
 from discord import Intents
 from discord.ext.commands import Bot
 
 print(inspect.cleandoc("""
     Please enter your bot's token below to continue.
 """))
-
-home = os.path.split(os.path.abspath(inspect.getsourcefile(lambda: 0)))[0]
+if sys.version_info[1] <= 8:
+    home = os.path.dirname(os.getcwd() + '/' + __file__)
+else:
+    home = os.path.dirname(__file__)
 
 try:
     with open("config.json") as f:
@@ -45,9 +49,9 @@ class FunnyBadge(Bot):
 
     async def setup_hook(self) -> None:
         """ This is called when the bot boots, to setup the global commands """
-        for filename in os.listdir(home + "/cogs"):
-            if filename.endswith(".py") and not filename.startswith("__"):
-                await client.load_extension(f"cogs.{filename[:-3]}")
+        for filename in glob.glob(home + '/cogs/**/*.py', recursive=True):
+            if not "__" in filename:
+                await client.load_extension(filename.replace(home + '/', '').replace('/', '.')[:-3])
         await self.tree.sync(guild=None)
 
 

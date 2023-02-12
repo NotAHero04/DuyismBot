@@ -10,17 +10,17 @@ home = os.path.split(os.path.abspath(inspect.getsourcefile(lambda: 0)))[0]
 
 
 class LunarCog(commands.Cog):
-	def __init__(self, client):
-		self.client = client
+    def __init__(self, client):
+        self.client = client
 
-	@app_commands.command()
-	@app_commands.describe(date="A date in ISO format. Example: 2022-07-19")
-	async def lunar(self, interaction: Interaction, date: str = datetime.date.today().isoformat()):
-		""" Get the lunar date """
-		print(f"> {interaction.user} used the command 'lunar'.")
-		await interaction.response.defer()
-		await interaction.followup.send(lunar.run(date))
+    @app_commands.command()
+    @app_commands.describe(date="A date in ISO format. Example: 2022-07-19")
+    async def lunar(self, interaction: Interaction, date: str = datetime.date.today().isoformat()):
+        """ Get the lunar date """
+        print(f"> {interaction.user} used the command 'lunar'.")
+        await interaction.response.defer()
+        await interaction.followup.send(lunar.run(date))
 
 
 async def setup(client):
-	await client.add_cog(LunarCog(client))
+    await client.add_cog(LunarCog(client))
