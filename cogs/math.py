@@ -62,6 +62,7 @@ class MathCog(commands.GroupCog, group_name="math"):
 Output: ``` {}```
 """.format(equation, '\n'.join(map(str, res))))
 
+
     @app_commands.command()
     @app_commands.describe(
         function="A function. Please insert multiplication symbol '*' when dealing with functions",
@@ -84,6 +85,43 @@ Output: ``` {}```""".format(function, var, order, at, res_t))
         else:
             await interaction.followup.send("""Input: ```{}, variable {}, order {}```
 Output: ``` {}```""".format(function, var, order, str(res).replace('**', '^')))
+
+
+    @app_commands.command()
+    @app_commands.describe(
+        function="A function. Please insert multiplication symbol '*' when dealing with functions",
+        var="The variable of the function to integrate. Defaults to x. Type a function with variable x to omit this option",
+        interval="The inverval of the integral (two space-separated numbers). Defaults to nothing, and the bot will output the antiderivative instead"
+    )
+
+    async def integrate(self, interaction: Interaction, function: str, var: str = 'x', interval: str = None):
+        """ Get antiderivative of simple functions """
+        print(f"> {interaction.user} used the command 'integrate'.")
+        await interaction.response.defer()
+        if interval is not None:
+            try:
+                at = interval.split(' ')
+                atf = list(map(str, giacpy.evalf(at)))
+                if len(at) != 2 or atf[0] >= atf[1]:
+                    await interaction.followup.send("Invalid interval. Please try again.")
+                else:
+                    res = giacpy.integrate(function, var, *at)
+                    if str(res) == "undef":
+                        res = "(undefined)"
+                    elif "integrate" in str(res):
+                        res = giacpy.evalf(res)
+                    await interaction.followup.send("""Input: ```{}, variable {}, interval {} to {}```
+Output: ``` {}```""".format(function, var, *at, res))
+            except ValueError:
+                await interaction.followup.send("You put a non-number as a part of the interval. Try again.")
+        else:
+            res = giacpy.integrate(function, var)
+            if str(res) == "undef":
+                res = "(undefined)"
+            elif "integrate" in str(res):
+                res = "(no trivial representation)"
+            await interaction.followup.send("""Input: ```{}, variable {}```
+Output: ``` {}```""".format(function, var, str(res).replace('**', '^')))
 
 
 async def setup(client):
