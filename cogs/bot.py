@@ -58,7 +58,7 @@ Join https://discord.gg/S4gDrGpqev for support.
         print(f"> {interaction.user} used the command 'reload'.")
         await interaction.response.defer()
         try:
-            for extension in self.client.extensions:
+            for extension in list(self.client.extensions):
                  await self.client.unload_extension(extension)
                  await self.client.load_extension(extension)
             await interaction.followup.send("Reload successful.")
@@ -95,9 +95,9 @@ Bot version: 0.1.5+nightly.20230209
         Bot info:
             Uptime: {round((datetime.datetime.now() - self.client.start_time).total_seconds() / 60)} minutes
         """)
-        temp_output = "\n        External libraries: *Gathering info...*"
+        temp_output = "\n    External libraries: *Gathering info...*"
         await interaction.followup.send(output + temp_output)
-        temp_output = "\n        External libraries: ```"
+        temp_output = "\n    External libraries: ```"
         libs = subprocess.getoutput('pip list').split('\n')
         pattern = re.compile("discord.py|requests|beautifulsoup4")
         for lib in libs:

@@ -17,6 +17,15 @@ class MathCog(commands.GroupCog, group_name="math"):
         self.client = client
 
 
+#    @app_commands.command()
+#    @app_commands.choices()
+#    @app_commands.describe()
+#    async def demo(self, interaction: Interaction):
+#        """demo command"""
+#        print(f"> {interaction.user} used the command 'demo'.")
+#        await interaction.response.defer()
+#        await interaction.followup.send()
+
     @app_commands.command()
     @app_commands.describe(number="A number greater than -1")
     async def pythagoras(self, interaction: Interaction, number: app_commands.Range[int, -1]):
@@ -122,6 +131,60 @@ Output: ``` {}```""".format(function, var, *at, res))
                 res = "(no trivial representation)"
             await interaction.followup.send("""Input: ```{}, variable {}```
 Output: ``` {}```""".format(function, var, str(res).replace('**', '^')))
+
+
+    @app_commands.command()
+    @app_commands.choices()
+    @app_commands.describe(number="An integer greater than 2. Accepts simple expressions")
+    async def ifactor(self, interaction: Interaction, number: str):
+        """Factorize a number"""
+        print(f"> {interaction.user} used the command 'ifactor'.")
+        await interaction.response.defer()
+        res = giacpy.ifactor(number)
+        await interaction.followup.send("""Input: ```{}```
+Output: ``` {}```""".format(number, str(res).replace('**', '^').replace('*', ' * ')))
+
+
+    @app_commands.command()
+    @app_commands.choices()
+    @app_commands.describe(number="A number, ideally with many digits ater decimal point")
+    async def float2rational(self, interaction: Interaction, number: str):
+        """Get the nearest fraction approximation"""
+        print(f"> {interaction.user} used the command 'float2rational'.")
+        await interaction.response.defer()
+        res = giacpy.float2rational(number)
+        if number == str(res):
+            res = "(no conversion done)"
+        await interaction.followup.send("""Input: ```{}```
+Output: ``` {}```""".format(number, str(res).replace('**', '^').replace('*', ' * ')))
+
+
+    @app_commands.command()
+    @app_commands.choices()
+    @app_commands.describe(number="A number")
+    async def dfc(self, interaction: Interaction, number: str):
+        """Get the continued fraction expansion"""
+        print(f"> {interaction.user} used the command 'dfc'.")
+        await interaction.response.defer()
+        res = giacpy.dfc(number)
+        await interaction.followup.send("""Input: ```{}```
+Output: ``` {}```""".format(number, str(res)))
+
+
+    @app_commands.command()
+    @app_commands.choices()
+    @app_commands.describe(number="A number")
+    async def pmin(self, interaction: Interaction, number: str):
+        """Get the simplest polynomial that has the number as a root"""
+        print(f"> {interaction.user} used the command 'pmin'.")
+        await interaction.response.defer()
+        res = giacpy.pmin(number)
+        if "pmin" in res and str(giacpy.evalf(number)) != number:
+            res = "(no trivial polynomial found)"
+        else:
+            res = giacpy.normal(giacpy.r2e(res, 'x'))
+        await interaction.followup.send("""Input: ```{}```
+Output: ``` {}```""".format(number, str(res).replace('**', '^')))
 
 
 async def setup(client):
