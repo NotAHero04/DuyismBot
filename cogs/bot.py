@@ -26,17 +26,12 @@ class BotCog(commands.Cog):
         print(f"> {interaction.user} used the command 'changelog'.")
         await interaction.response.defer()
         await interaction.followup.send("""
-Latest release: 0.1.4 (2023-2-8).
+Latest release: 0.1.5 (2023-2-8).
         - New commands:
-                - "cpu" command.
-                        + Uses TechPowerUP's webpage to retrieve information about CPUs from Intel and AMD.
-                - "gpu" command.
-                        + Uses TechPowerUP's webpage to retrieve information about GPUs from Nvidia, AMD and Intel.
-                - "phone" command.
-                        + Retrieve information about phones.
-        - Migrated the bot's code base to Python 3.8.
+		+ Maths for nerds
 
 Version history:
+	0.1.4 (2023-2-8): Added computer hardware-related commands.
         0.1.3 (2023-1-9): Added commands: "urban", "dictionary", "translate".
         0.1.2 (2023-1-1): Moved the entire bot's codebase to Python, was a mix between Python and Bash
         0.1.1 (2022-12-26): Fully modularized the bot, allowing for on-the-go modifications
@@ -47,7 +42,6 @@ This bot uses these external services:
         - TechPowerUP (cpu, gpu)
 	- gsmarena (phone), via external APIs
 
-This bot is currently in Phase 2 of the development.
 Join https://discord.gg/S4gDrGpqev for support.
 """)
 
@@ -63,8 +57,14 @@ Join https://discord.gg/S4gDrGpqev for support.
                  await self.client.load_extension(extension)
             await interaction.followup.send("Reload successful.")
         except Exception:
-            await interaction.followup.send("An error occurred while reloading.")
-            await self.client.load_extension("cogs.bot")
+            try:
+                await self.client.load_extension("cogs.bot")
+            except Exception:
+                await interaction.followup.send("An error occurred while reloading. Fallback to broken state failed. Restart the bot.")
+            else:
+                await interaction.followup.send("An error occurred while reloading.")
+
+
 
 
     @app_commands.command()
@@ -84,7 +84,7 @@ Join https://discord.gg/S4gDrGpqev for support.
         output = """
 Ultimate Duyism Bot, by modern#0399
 Running in Python {}.
-Bot version: 0.1.5+nightly.20230209
+Bot version: 0.1.6+nightly.2023.4.15
 """.format('.'.join(list(map(str,sys.version_info[0:3]))))
         if platform.system() == "Windows":
             output = inspect.cleandoc(f"""
@@ -97,13 +97,18 @@ Bot version: 0.1.5+nightly.20230209
         """)
         temp_output = "\n    External libraries: *Gathering info...*"
         await interaction.followup.send(output + temp_output)
-        temp_output = "\n    External libraries: ```"
+        temp_output = "\n    External libraries: "
         libs = subprocess.getoutput('pip list').split('\n')
         pattern = re.compile("discord.py|requests|beautifulsoup4")
+        no_info = True
         for lib in libs:
             if pattern.search(lib):
-                temp_output += "\n{}".format(lib)
-        temp_output += "```"
+                temp_output += "```\n{}".format(lib)
+                no_info = False
+        if no_info:
+            temp_output += "*No information.*"
+        else:
+            temp_output += "```"
         await interaction.edit_original_response(content=output+temp_output)
 
 

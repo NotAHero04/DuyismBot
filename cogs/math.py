@@ -77,14 +77,19 @@ Output: ``` {}```
         function="A function. Please insert multiplication symbol '*' when dealing with functions",
         var="The variable of the function to derive. Defaults to x. Type a function with variable x to omit this option",
         order="The order of the derivative. Defaults to 1",
-        at="The value to calculate the derivative at. Defaults to nothing, and the bot will output the function instead"
+        at="The value to calculate the derivative at. Defaults to nothing, and the bot will output the function instead",
+        simplify="Simplify the result. Defaults to true"
+    )
+    @app_commands.choices(simplify=[
+        app_commands.Choice(name="true", value=1),
+        app_commands.Choice(name="false", value=0)]
     )
 
-    async def derive(self, interaction: Interaction, function: str, var: str = 'x', order: app_commands.Range[int, 1] = 1, at: str = None):
+    async def derive(self, interaction: Interaction, function: str, var: str = 'x', order: app_commands.Range[int, 1] = 1, at: str = None, simplify: int = 1):
         """ Get derivative of simple functions """
         print(f"> {interaction.user} used the command 'derive'.")
         await interaction.response.defer()
-        res = giacpy.normal(giacpy.diff(function, f"{var}${order}"))
+        res = giacpy.diff(function, f"{var}${order}")
         if at is not None:
             res_t = giacpy.subst(res, var, at)
             if str(res_t) == "undef":
@@ -92,6 +97,8 @@ Output: ``` {}```
             await interaction.followup.send("""Input: ```{}, variable {}, order {}, at {}```
 Output: ``` {}```""".format(function, var, order, at, res_t))
         else:
+            if simplify == 1:
+                res = giacpy.simplify(res)
             await interaction.followup.send("""Input: ```{}, variable {}, order {}```
 Output: ``` {}```""".format(function, var, order, str(res).replace('**', '^')))
 
@@ -134,7 +141,6 @@ Output: ``` {}```""".format(function, var, str(res).replace('**', '^')))
 
 
     @app_commands.command()
-    @app_commands.choices()
     @app_commands.describe(number="An integer greater than 2. Accepts simple expressions")
     async def ifactor(self, interaction: Interaction, number: str):
         """Factorize a number"""
@@ -146,7 +152,6 @@ Output: ``` {}```""".format(number, str(res).replace('**', '^').replace('*', ' *
 
 
     @app_commands.command()
-    @app_commands.choices()
     @app_commands.describe(number="A number, ideally with many digits ater decimal point")
     async def float2rational(self, interaction: Interaction, number: str):
         """Get the nearest fraction approximation"""
@@ -160,7 +165,6 @@ Output: ``` {}```""".format(number, str(res).replace('**', '^').replace('*', ' *
 
 
     @app_commands.command()
-    @app_commands.choices()
     @app_commands.describe(number="A number")
     async def dfc(self, interaction: Interaction, number: str):
         """Get the continued fraction expansion"""
@@ -172,7 +176,6 @@ Output: ``` {}```""".format(number, str(res)))
 
 
     @app_commands.command()
-    @app_commands.choices()
     @app_commands.describe(number="A number")
     async def pmin(self, interaction: Interaction, number: str):
         """Get the simplest polynomial that has the number as a root"""
@@ -185,6 +188,31 @@ Output: ``` {}```""".format(number, str(res)))
             res = giacpy.normal(giacpy.r2e(res, 'x'))
         await interaction.followup.send("""Input: ```{}```
 Output: ``` {}```""".format(number, str(res).replace('**', '^')))
+
+    @app_commands.command()
+    @app_commands.choices()
+    @app_commands.describe(
+         number="A number (if convert to base-n) or a list of space-separated numbers (if convert from base-n)",
+         base="The base to convert to (or from)"
+    )
+    async def base_n(self, interaction: Interaction, number: str, base: str):
+        """Convert number to base-n"""
+        print(f"> {interaction.user} used the command 'base_n'.")
+        await interaction.response.defer()
+        warning = None
+        if not number.replace(' ', '').isdigit():
+            await interaction.followup.send("Only numbers are supported")
+        else:
+            input = number.split(' ')
+            if len(input) == 1:
+                res = giacpy.convert(input[0], giacpy.base, base)
+                mode = f"base {base}"
+                warning = "\n(read backwards)"
+            else:
+                res = giacpy.convert(input, giacpy.base, base)
+                mode = f"(base {base}) to base 10"
+            await interaction.followup.send("""Input: ```convert {} {}```
+Output: ``` {}```{}""".format(number, mode, str(res), warning or ''))
 
 
 async def setup(client):
