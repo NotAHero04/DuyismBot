@@ -40,7 +40,7 @@ The first page is 1.""", ephemeral=True)
                 ret[id]['defs'] = urban.run(ret[id]['word'], (index - 1) // 10 + 1)
                 await interaction.response.edit_message(content=f"""
 {index}/{length}
-{parse(ret[id]['defs'][(index - 1) % 10])}
+{parse(ret[id]['defs'][(ret[id]['index'] - 1) % 10])}
 """)
         except ValueError:
             await interaction.response.send_message(f"""That is not a valid page number at all.""", ephemeral=True)
@@ -92,7 +92,7 @@ class UrbanView(View):
                     ret[id]['defs'] = urban.run(self.word, (ret[id]['index'] - 1) // 10 + 1)
             await interaction.response.edit_message(content=f"""
 {ret[id]['index']}/{self.max_index}
-{parse(ret[id]['defs'][(ret[id]['index'] % 10)])}
+{parse(ret[id]['defs'][(ret[id]['index'] - 1) % 10])}
 """)
         except IndexError:
             ret[id]['index'] = index
