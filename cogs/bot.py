@@ -47,27 +47,6 @@ Join https://discord.gg/S4gDrGpqev for support.
 
 
     @app_commands.command()
-    async def reload(self, interaction: Interaction):
-        """Reload the bot and commands"""
-        print(f"> {interaction.user} used the command 'reload'.")
-        await interaction.response.defer()
-        try:
-            for extension in list(self.client.extensions):
-                 await self.client.unload_extension(extension)
-                 await self.client.load_extension(extension)
-            await interaction.followup.send("Reload successful.")
-        except Exception:
-            try:
-                await self.client.load_extension("cogs.bot")
-            except Exception:
-                await interaction.followup.send("An error occurred while reloading. Fallback to broken state failed. Restart the bot.")
-            else:
-                await interaction.followup.send("An error occurred while reloading.")
-
-
-
-
-    @app_commands.command()
     async def ping(self, interaction: Interaction):
         """Test the bot's latency"""
         print(f"> {interaction.user} used the command 'ping'.")
@@ -81,10 +60,11 @@ Join https://discord.gg/S4gDrGpqev for support.
         print(f"> {interaction.user} used the command 'botinfo'.")
         await interaction.response.defer()
         version = "{}.{}.{}".format(*sys.version_info)
+        now = datetime.datetime.now()
         output = """
 Ultimate Duyism Bot, by modern#0399
 Running in Python {}.
-Bot version: 0.1.6+nightly.2023.4.15
+Bot version: 0.1.6+nightly.2023.4.16
 """.format('.'.join(list(map(str,sys.version_info[0:3]))))
         if platform.system() == "Windows":
             output = inspect.cleandoc(f"""
@@ -93,7 +73,8 @@ Bot version: 0.1.6+nightly.2023.4.15
                 """)
         output += '\n' + inspect.cleandoc(f"""
         Bot info:
-            Uptime: {round((datetime.datetime.now() - self.client.start_time).total_seconds() / 60)} minutes
+            Uptime: {round((now - self.client.start_time).total_seconds() / 60)} minutes
+            (since {self.client.start_time.replace(microsecond=0).astimezone().isoformat()})
         """)
         temp_output = "\n    External libraries: *Gathering info...*"
         await interaction.followup.send(output + temp_output)

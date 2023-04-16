@@ -95,6 +95,8 @@ def logreader(path: str):
   res.append(None)
  # Java version and arguments (5, 6, 7)
  java_type = None
+ java_ver = None
+ java_path = None
  if res[2] == "Android":
   java = re.search("JAVA_HOME=(.*)", file)
   java_args = re.search("Custom Java arguments: \"(.*)\"", file)
@@ -107,11 +109,11 @@ def logreader(path: str):
     if java_ver is not None:
      java_type = java_ver.group(1)
  else:
-  java = re.search("JAVA_HOME is set to (.*)", file)
+  java = re.search("JAVA_HOME is (now)? set to (.*)", file)
   # TODO: Any way to detect Java args on iOS log?
   java_args = None
   if java is not None:
-   java_path = java.group(1)
+   java_path = java.group(2)
    java_ver = re.search("java(-([0-9]+))-openjdk", java_path)
  if java_ver is not None:
   if java_ver.group(1) is None:
@@ -189,8 +191,12 @@ def logreader(path: str):
    problems.append("The current allocation ({}MB) is too high for the system.".format(int(reserve_heap_space.group(1))/1024))
   if "java.lang.OutOfMemoryError: Java heap space" in file:
    problems.append("The current allocation is not enough for Minecraft.")
-  if "angle" in res[8] and "glCheckFramebufferStatus returned unknown status" in file:
-   problems.append("ANGLE is incompatible with Minecraft version {}".format(res[4]))
+  if "angle" in res[8]:
+   if "glCheckFramebufferStatus returned unknown status" in file:
+    # The launcher will fallback to using gl4es, but in a broken state
+    problems.append("ANGLE is incompatible with device (possibly no VK support)")
+   elif "Could not initialize framebuffer support" in file or "Are you running essential and/or <1.13?" in file:
+    problems.append("ANGLE is not supported in Minecraft version {}".format(mc_ver))
   if (res[3] == "arm" or res[3] == "x86") and "virgl" in res[8]:
    problems.append("VirGL is not supported on platform {}".format(res[3]))
   if "java.lang.ClassCastException: class jdk.internal.loader.ClassLoaders$AppClassLoader cannot be cast to class java.net.URLClassLoader" in file:
@@ -202,7 +208,7 @@ def logreader(path: str):
     problems.append("The modpack is incompatible")
   if "[OptiFine] OpenGL error: 1280 (Invalid enum), at: Copy VBO" in file:
    problems.append("Render regions is enabled in OptiFine 1.17+ while using GL4ES")
-  if "Native memory allocation (malloc) failed to allocate" in file:
+  if "There is insufficient memory for the Java Runtime Environment to continue" in file:
    problems.append("JVM crashed due to insufficient memory on the system")
  return (res, warnings, problems)
 
