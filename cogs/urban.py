@@ -13,17 +13,20 @@ from utils import urban
 
 home = os.path.split(os.path.abspath(inspect.getsourcefile(lambda: 0)))[0]
 
+ret = {}
 
 class UrbanModal(Modal, title="Go to page..."):
-    def __init__(self, word):
+    def __init__(self, id):
         super().__init__()
-        self.word = word
+        self.id = id
 
     input = TextInput(label="Page", placeholder="1")
 
     async def on_submit(self, interaction: Interaction):
-        global index
-        index2 = index
+        global ret
+        id = self.id
+        length = ret[id]['max_index']
+        index2 = ret[id]['index']
         try:
             index = int(self.input.value)
             if index > length:
@@ -33,77 +36,78 @@ The last page is {length}.""", ephemeral=True)
                 await interaction.response.send_message(f"""It looks like you are trying to go too far.
 The first page is 1.""", ephemeral=True)
             else:
-                global ret
-                ret = urban.run(self.word, (index - 1) // 10 + 1)
+                ret[id]['index'] = index
+                ret[id]['defs'] = urban.run(ret[id]['word'], (index - 1) // 10 + 1)
                 await interaction.response.edit_message(content=f"""
 {index}/{length}
-{parse(ret[(index - 1) % 10])}
+{parse(ret[id]['defs'][(index - 1) % 10])}
 """)
         except ValueError:
-            index = index2
             await interaction.response.send_message(f"""That is not a valid page number at all.""", ephemeral=True)
         except (KeyError, IndexError):
-            index = index2
             await interaction.response.send_message(f"""Something goes wrong. Try again.""", ephemeral=True)
 
 
 class UrbanView(View):
-    def __init__(self, timeout, max_index, word):
+    def __init__(self, timeout, id):
+        global ret
         super().__init__(timeout=timeout)
-        self.max_index = max_index
-        self.word = word
+        self.id = id
+        self.max_index = ret[id]['max_index']
+        self.word = ret[id]['word']
 
     async def on_timeout(self) -> None:
+        global ret
+        ret.pop(self.id)
         self.stop()
 
     @discord.ui.button(label="<<",
                        style=ButtonStyle.green)
     async def prev(self, interaction: Interaction, button: Button):
-        global index
+        global ret
+        id = self.id
         try:
-            index -= 1
-            if index % 10 == 0:
-                global ret
-                ret = urban.run(self.word, (index - 1) // 10 + 1)
-            if index < 1:
-                index = 1
+            if ret[id]['index'] > 1:
+                ret[id]['index'] -= 1
+                if ret[id]['index'] % 10 == 0:
+                    ret[id]['defs'] = urban.run(self.word, (ret[id]['index'] - 1) // 10 + 1)
             await interaction.response.edit_message(content=f"""
-{index}/{self.max_index}
-{parse(ret[(index - 1) % 10])}
+{ret[id]['index']}/{self.max_index}
+{parse(ret[id]['defs'][(ret[id]['index'] - 1) % 10])}
 """)
         except IndexError:
-            index += 1
+            ret[id]['index'] = index
             await interaction.response.send_message(f"""Something goes wrong. Try again.""", ephemeral=True)
 
 
     @discord.ui.button(label=">>",
                        style=ButtonStyle.green)
     async def next(self, interaction: Interaction, button: Button):
-        global index
+        global ret
+        id = self.id
         try:
-            index += 1
-            if index % 10 == 1:
-                global ret
-                ret = urban.run(self.word, (index - 1) // 10 + 1)
-            if index > self.max_index:
-                index = self.max_index
+            if ret[id]['index'] < self.max_index:
+                ret[id]['index'] += 1
+                if ret[id]['index'] % 10 == 1:
+                    ret[id]['defs'] = urban.run(self.word, (ret[id]['index'] - 1) // 10 + 1)
             await interaction.response.edit_message(content=f"""
-{index}/{self.max_index}
-{parse(ret[(index - 1) % 10])}
+{ret[id]['index']}/{self.max_index}
+{parse(ret[id]['defs'][(ret[id]['index'] % 10)])}
 """)
         except IndexError:
-            index -= 1
+            ret[id]['index'] = index
             await interaction.response.send_message(f"""Something goes wrong. Try again.""", ephemeral=True)
 
     @discord.ui.button(label="Go to...",
                        style=ButtonStyle.gray)
     async def goto(self, interaction: Interaction, button: Button):
-        await interaction.response.send_modal(UrbanModal(word=self.word))
+        await interaction.response.send_modal(UrbanModal(id=self.id))
 
 
 class UrbanCog(commands.Cog):
     def __init__(self, client):
         self.client = client
+
 
     @app_commands.command()
     @app_commands.describe(
@@ -120,18 +124,25 @@ class UrbanCog(commands.Cog):
         await interaction.response.defer()
         global ret, length, index
         index = 1
-        ret = urban.run(word)
+        res = urban.run(word)
+        id = str(interaction.id)
         if fetch_all_results == 0:
-            length = len(ret)
+            length = len(res)
         else:
             length = urban.get_def_count(word)
-        if len(ret) == 0:
+        if len(res) == 0:
             await interaction.followup.send("That word is not defined yet. May be it's your time to define it?")
         else:
-            view = UrbanView(timeout=900, max_index=length, word=word)
+            ret[id] = {
+                "word": word,
+                "defs": res,
+                "index": index,
+                "max_index": length
+            }
+            view = UrbanView(timeout=900, id=id)
             await interaction.followup.send(f"""
 1/{length}
-{parse(ret[0])}
+{parse(res[0])}
 """, view=view)
             await view.wait()
 
