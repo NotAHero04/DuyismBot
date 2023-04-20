@@ -1,15 +1,52 @@
+import datetime
+import inspect
+import os
+
 import inspect
 import os
 import random
 from discord import Interaction, app_commands, TextChannel
 from discord.ext import commands
+from utils import lunar
 
 home = os.path.split(os.path.abspath(inspect.getsourcefile(lambda: 0)))[0]
 
 
-class MiscCog(commands.Cog):
+class MiscCog(commands.GroupCog, group_name="misc"):
     def __init__(self, client):
         self.client = client
+
+
+    @app_commands.command()
+    @app_commands.describe(date="A date in ISO format. Example: 2022-07-19")
+    async def lunar(self, interaction: Interaction, date: str = datetime.date.today().isoformat()):
+        """ Get the lunar date """
+        print(f"> {interaction.user} used the command 'lunar'.")
+        await interaction.response.defer()
+        await interaction.followup.send(lunar.run(date))
+
+
+    @app_commands.command()
+    async def badge(self, interaction: Interaction):
+        """ For the surprise """
+        print(f"> {interaction.user} used the command 'badge'.")
+
+        await interaction.response.defer()
+        await interaction.followup.send(inspect.cleandoc(f"""
+            Hi **{interaction.user}**.
+            > __**Where's my badge?**__
+            > Eligibility for the badge is checked by Discord in intervals,
+            > at this moment in time, 24 hours is the recommended time to wait before trying.
+
+            > __**It's been 24 hours, now how do I get the badge?**__
+            > If it's already been 24 hours, you can head to
+            > https://discord.com/developers/active-developer and fill out the 'form' there.
+
+            > __**Active Developer Badge Updates**__
+            > Updates regarding the Active Developer badge can be found in the
+            > Discord Developers server -> https://discord.gg/discord-developers - in the #active-dev-badge channel.
+        """))
+
 
     @app_commands.command()
     @app_commands.describe(
