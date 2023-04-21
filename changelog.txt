@@ -1,11 +1,11 @@
 Latest release: 0.1.6 (2023-4-21).
         - New features:
-                + PojavLaunvher log reader.
+                + PojavLauncher log reader.
                 + Commands: "say".
                 + A bit more math.
         - Fixes many bugs! And many clean-ups!
                 + Successfully split running instances of "urban".
-                + Make "reload" a separate cogs to eliminate dead locks
+                + Make "reload" a separate cog to eliminate dead locks
                 + Move commands to groups
 
 Version history:
