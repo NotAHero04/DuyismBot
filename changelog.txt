@@ -1,0 +1,23 @@
+Latest release: 0.1.6 (2023-4-21).
+        - New features:
+                + PojavLaunvher log reader.
+                + Commands: "say".
+                + A bit more math.
+        - Fixes many bugs! And many clean-ups!
+                + Successfully split running instances of "urban".
+                + Make "reload" a separate cogs to eliminate dead locks
+                + Move commands to groups
+
+Version history:
+        0.1.5 (2023-2-23): Math for nerds
+        0.1.4 (2023-2-8): Added computer hardware-related commands.
+        0.1.3 (2023-1-9): Added commands: "urban", "dictionary", "translate".
+        0.1.2 (2023-1-1): Moved the entire bot's codebase to Python, was a mix between Python and Bash
+        0.1.1 (2022-12-26): Fully modularized the bot, allowing for on-the-go modifications
+        0.1.0 (2022-12-17): Initial release.
+
+This bot uses these external services:
+        - Google Translate (translate), via external APIs
+        - TechPowerUP (cpu, gpu)
+
+Join https://discord.gg/S4gDrGpqev for support.
